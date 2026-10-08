@@ -1,5 +1,5 @@
 ﻿<p align="center">
-  <img src="banner.png" alt="Athena — Hermes Desktop artifact panel" width="100%">
+  <img src="banner.webp" alt="Athena — Hermes Desktop artifact panel" width="100%">
 </p>
 
 # Athena

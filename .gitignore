@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -27,3 +27,8 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Superseded: the banner is now banner.webp. Tracked history keeps the old
+# .png; this entry only prevents the stale local copy being re-added while
+# another process still holds a handle on it.
+banner.png
