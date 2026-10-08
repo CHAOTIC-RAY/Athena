@@ -1,0 +1,8 @@
+{
+  "name": "athena",
+  "version": "0.1.0",
+  "label": "Athena",
+  "icon": "markdown",
+  "description": "Inline artifact viewer for the focused session.",
+  "api": "plugin_api.py"
+}

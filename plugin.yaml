@@ -1,0 +1,16 @@
+name: athena
+version: 0.1.0
+manifest_version: 2
+api_version: 1
+description: "Athena — right-side artifact panel for the focused session. Inline markdown/code/image/html viewer, grouped list + filter."
+author: user
+license: MIT
+tags:
+  - desktop
+  - artifacts
+  - sidebar
+provides_hooks:
+  - post_tool_call
+kind: standalone
+platforms:
+  - desktop
