@@ -1851,18 +1851,24 @@ function openInAthena(path, sessionId) {
  * focused-session atom had a value, which hid the button on exactly the cards
  * it was meant for and called a hook after an early return.
  */
-function OpenInAthenaButton() {
-  // peekOpen() returns null when nothing is queued (the normal mount state), and
-  // a card action renders once per file — so this MUST tolerate null. Reading
-  // pending.path unguarded here threw on first render and took down every
-  // fileCard.actions slot in the app.
-  const [pending, setPending] = useState(() => peekOpen() || null)
+function OpenInAthenaButton(context) {
+  // The host passes `{ path, name }` for the row this action is rendered in
+  // (changed-files-card mounts one slot per file). That is the authoritative
+  // target — a slot has no other way to know which file it belongs to.
+  //
+  // The mailbox is the FALLBACK for hosts that mount this area without context
+  // (an attachment card that carries a path but no per-row slot). peekOpen()
+  // returns null in the normal mount state, so it must be tolerated.
+  const fromSlot = context && typeof context.path === 'string' ? context.path : ''
+  const [pending, setPending] = useState(() => (fromSlot ? null : peekOpen() || null))
 
   useEffect(() => {
+    if (fromSlot) return undefined
     return subscribeOpen(next => setPending(next ? { ...next } : null))
-  }, [])
+  }, [fromSlot])
 
-  const target = (pending && pending.path) || ''
+  const queued = pending && pending.path
+  const target = fromSlot || queued || ''
   const label = target ? target.replace(/\\/g, '/').split('/').pop() : ''
 
   return jsx('button', {
@@ -1883,7 +1889,10 @@ function OpenInAthenaButton() {
       }
       try {
         if (target) {
-          openInAthena(target, pending.sessionId)
+          // `pending` is null whenever the path came from the slot, so the
+          // session id must be read off it defensively — it is optional here
+          // because the pane resolves the focused session itself.
+          openInAthena(target, (pending && pending.sessionId) || '')
         } else if (typeof host.revealPane === 'function') {
           host.revealPane(PANE_ID)
         } else if (typeof host.navigate === 'function') {
@@ -2025,7 +2034,7 @@ export default {
         area: FILE_CARD_ACTIONS_AREA,
         order: 10,
         title: 'Athena',
-        render: () => jsx(OpenInAthenaButton, {}),
+        render: ctx => jsx(OpenInAthenaButton, { context: ctx }),
       },
       {
         // `::athena{path="…"}` — an in-message chip the agent can emit so a

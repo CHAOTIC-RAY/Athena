@@ -319,10 +319,23 @@ check_true(
 # Regression: peekOpen() returns null when nothing is queued — the normal mount
 # state for a card action. Reading pending.path unguarded threw a TypeError on
 # first render, which crashed every fileCard.actions slot in the app.
+#
+# The host now supplies the path per row via `<Slot context={{path, name}}>`, so
+# the mailbox is only a fallback. The null-tolerance must therefore hold on BOTH
+# paths: `target` never dereferences `pending` without a guard, and the click
+# handler reads `pending.sessionId` defensively (pending is null whenever the
+# path came from the slot).
 check_true(
     "plugin.js card action tolerates a null pending open",
-    "useState(() => peekOpen() || null)" in js_text
-    and "const target = (pending && pending.path) || ''" in js_text,
+    "useState(() => (fromSlot ? null : peekOpen() || null))" in js_text
+    and "const target = fromSlot || queued || ''" in js_text
+    and "queued = pending && pending.path" in js_text
+    and "openInAthena(target, (pending && pending.sessionId) || '')" in js_text,
+)
+check_true(
+    "plugin.js card action prefers the host-supplied row path over the mailbox",
+    "render: ctx => jsx(OpenInAthenaButton, { context: ctx })" in js_text
+    and "context && typeof context.path === 'string'" in js_text,
 )
 
 pkg_path = PLUGIN_DIR.parent.parent / "desktop-plugins" / "athena" / ".hermes-package.json"
