@@ -338,6 +338,39 @@ check_true(
     and "context && typeof context.path === 'string'" in js_text,
 )
 
+# The plugin is standalone: everything except the optional file-card BUTTON
+# works on a stock Hermes install. An earlier README claimed three entry points
+# all open a specific file and that the card slot came from
+# preview-attachment.tsx — both wrong (the slot lives in changed-files-card.tsx,
+# and it needs a core patch), so it read as if a rebuild were mandatory.
+# Guard the honest framing so the docs cannot drift back.
+readme_text = read_text(PLUGIN_DIR / "README.md")
+check_true(
+    "README states no desktop rebuild is required",
+    "No rebuild of Hermes Desktop is needed" in readme_text
+    and "no rebuild required" in readme_text,
+)
+check_true(
+    "README marks the file-card button as the rebuild-dependent extra",
+    "## Optional: the file-card button" in readme_text
+    and "**Yes** — see below" in readme_text
+    and "requires rebuilding Hermes Desktop" in readme_text,
+)
+check_true(
+    "README points at the component that actually mounts the slot",
+    "changed-files-card.tsx" in readme_text
+    and "preview-attachment.tsx" not in readme_text,
+)
+check_true(
+    "README anchors resolve to a real section",
+    readme_text.count("](#optional-the-file-card-button)") >= 1
+    and "## Optional: the file-card button" in readme_text,
+)
+check_true(
+    "README leaks no local machine paths",
+    "Wafig" not in readme_text and "C:/Users" not in readme_text,
+)
+
 pkg_path = PLUGIN_DIR.parent.parent / "desktop-plugins" / "athena" / ".hermes-package.json"
 if Path(pkg_path).is_file():
     pkg = json.loads(read_text(pkg_path))

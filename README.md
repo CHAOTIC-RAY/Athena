@@ -14,6 +14,12 @@ Right-side Hermes Desktop panel for the focused session's artifacts.
 - **Live** indexing via a `post_tool_call` hook + JSON store, backfilled
   from Hermes' own read-only SQLite transcript store
 
+> **Installs on a stock Hermes — no rebuild required.** Everything above works
+> by copying the plugin in and reloading desktop plugins. One optional extra
+> (an "Open in Athena" button on file cards in the chat) needs a small change to
+> Hermes Desktop; see
+> [Optional: the file-card button](#optional-the-file-card-button).
+
 ## Screenshots
 
 ### Grouped artifact list
@@ -144,31 +150,41 @@ subscriber, but the pane does not depend on it.
 > routes and returns
 > `404: Headless backend (hermes serve): web UI disabled`. Use `hermes dashboard`.
 
+**No rebuild of Hermes Desktop is needed.** Steps 1–4 are the whole install. If
+you have never rebuilt the app from source, Athena still works completely — see
+[Optional: the file-card button](#optional-the-file-card-button) for the one
+convenience that does require it.
+
 ## Opening a file in Athena from the chat
 
-Three entry points reach Athena from the transcript. Each opens the **specific
-file** where a path exists.
+**Everything in Athena works on a stock Hermes install — no rebuild, no core
+patch.** The plugin is self-contained: copy it in, reload desktop plugins, done.
 
-| Entry point | Where | Behavior |
+The *extra* "Open in Athena" button on file cards is a separate, optional
+convenience that needs a small change to Hermes Desktop itself. See
+[Optional: the file-card button](#optional-the-file-card-button).
+
+| Entry point | Needs a Hermes rebuild? | Opens |
 |---|---|---|
-| **File-card action** | attachment cards (`preview-attachment.tsx` has a `fileCard.actions` slot) | "Athena" button on the card; opens that file **where a path exists** |
+| **Athena's own list** — click any artifact row | **No** | that file |
+| **`::athena{path="…"}`** directive chip | **No** | that file |
+| **"Open in Athena" button on a file card** | **Yes** — see below | that file |
+| **Tool-result card button** | **Yes** — see below | the session list |
 
-### Example 1 — File-card action
+The first two need nothing but the plugin. They are the supported path.
 
-An attachment card for `spec.md` renders an "Athena" button. Clicking it calls
-the handoff mailbox, and the pane selects `<hermes_home>/spec.md`, opens it as
-a tab, and re-polls the file body every 15 seconds.
+### Example 1 — click a row in the artifact list
 
-```md
-<!-- no markup needed from you; this is what the card renders -->
-[Read spec.md] (Athena)
-```
+The default way in. Open Athena from the right pane, the sidebar, or
+`/athena`, and click any row. The pane selects it, opens it as a tab, and
+re-polls the file body every 15 seconds. No rebuild required.
 
 ### Example 2 — `::athena{path="…"}`
 
 Any assistant message can carry a directive chip. Athena validates the path
 client-side, then the backend refuses anything that is not absolute, contains a
 `..` segment, names a credential directory, or resolves outside the Hermes home.
+No rebuild required.
 
 ```md
 Agents can now draft the discovery report themselves.
@@ -176,12 +192,11 @@ Agents can now draft the discovery report themselves.
 ::athena{path="<hermes_home>/spec.md"}
 ```
 
-### Example 3 — Tool-result card
+### Example 3 — tool-result card
 
 A tool-result artifact card exposes only `kind`, `language`, and `title`, and
-renders the tool's inline fence content — it carries **no file path**. Clicking
-its "Athena" button therefore reveals Athena's session list rather than opening
-a nonexistent file.
+renders the tool's inline fence content — it carries **no file path**. So its
+button reveals Athena's session list rather than opening a nonexistent file.
 
 ```md
 # Tool-result artifact card
@@ -189,8 +204,38 @@ ArtifactDetection = { kind: 'markdown', language: 'markdown', title: 'plan' }
 <!-- no path behind this card -->
 ```
 
-The cost of the click on a tool-result card: a live, grouped session list.
-Opening a specific file requires a file-card action or a directive.
+## Optional: the file-card button
+
+The "Open in Athena" button rendered on a file card in the transcript
+(`1 file changed / myfile.md / +12 / Review`) is a **contribution area**
+(`fileCard.actions`) that Hermes Desktop must actually mount.
+
+On a stock install it does not. Athena still registers the contribution, so
+nothing errors — there is simply no `<Slot>` for it to render into, and the
+button stays invisible. This is the intended failure mode: a missing button
+rather than a broken pane.
+
+To get the button, Hermes Desktop needs two small additive changes:
+
+1. **Export the area** — `FILE_CARD_ACTIONS_AREA = 'fileCard.actions'` from
+   `src/sdk/areas.ts` (and re-export it from the SDK barrel).
+2. **Mount it per file row** — a `<Slot area={FILE_CARD_ACTIONS_AREA}
+   context={{ path, name }} />` in
+   `src/components/assistant-ui/thread/changed-files-card.tsx`, placed as a
+   **sibling** of that row's own `<button>` (nesting would emit
+   `<button><button>`, which is invalid, and the click would bubble into
+   opening the diff).
+
+Change 2 is why `Slot` grew an optional `context` prop: the area renders once
+per file, so a contribution has to be told *which* row it is in. The change is
+backwards compatible — `render(context?)` is optional and every existing
+contribution keeps working untouched.
+
+**This requires rebuilding Hermes Desktop.** These are core `.tsx`/`.ts` files,
+so <kbd>⌘K</kbd> → *Reload desktop plugins* is not enough; the app itself must be
+rebuilt and restarted. Until you do, the button will not appear — and that is
+fine, because the artifact list and the `::athena{path="…"}` directive already
+cover every case without a rebuild.
 
 ## Left-side tab: All-sessions
 
