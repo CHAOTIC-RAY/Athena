@@ -36,7 +36,7 @@ document stays readable in a narrow panel.
 Athena docks to the right of the chat, so the transcript and the artifacts stay
 side by side. Back steps through what you opened; Refresh re-reads from disk.
 
-<img src="docs/images/screenshot-pane-and-doc.png" alt="Athena docked to the right of the Hermes chat with a document open" width="720">
+<img src="docs/images/screenshot-pane-and-doc.png" alt="Athena panel docked beside the chat, with a markdown document open" width="380">
 
 ## Where the data comes from
 
