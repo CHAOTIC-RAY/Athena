@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="banner.png" alt="Athena — Hermes Desktop artifact panel" width="100%">
 </p>
 
@@ -13,6 +13,30 @@ Right-side Hermes Desktop panel for the focused session's artifacts.
 - Filter/search, tab strip, live indexing
 - **Live** indexing via a `post_tool_call` hook + JSON store, backfilled
   from Hermes' own read-only SQLite transcript store
+
+## Screenshots
+
+### Grouped artifact list
+
+Every file the session produced, grouped by kind, with age, size, and the tool
+that wrote it. Read-only tools never appear here — only actual output.
+
+<img src="docs/images/screenshot-artifact-list.png" alt="Athena artifact list grouped into Walkthroughs, Plans and Code" width="380">
+
+### Inline viewer
+
+Click a row and the document opens beside the list — rendered, not dumped as raw
+text. Tables, code fences and long lines reflow to the pane width, so a wide
+document stays readable in a narrow panel.
+
+<img src="docs/images/screenshot-markdown-viewer.png" alt="Athena rendering a markdown plan with tables inline" width="380">
+
+### Beside the conversation
+
+Athena docks to the right of the chat, so the transcript and the artifacts stay
+side by side. Back steps through what you opened; Refresh re-reads from disk.
+
+<img src="docs/images/screenshot-pane-and-doc.png" alt="Athena docked to the right of the Hermes chat with a document open" width="720">
 
 ## Where the data comes from
 
@@ -132,7 +156,7 @@ file** where a path exists.
 ### Example 1 — File-card action
 
 An attachment card for `spec.md` renders an "Athena" button. Clicking it calls
-the handoff mailbox, and the pane selects `D:\Wafig\Hermes\spec.md`, opens it as
+the handoff mailbox, and the pane selects `<hermes_home>/spec.md`, opens it as
 a tab, and re-polls the file body every 15 seconds.
 
 ```md
@@ -149,7 +173,7 @@ client-side, then the backend refuses anything that is not absolute, contains a
 ```md
 Agents can now draft the discovery report themselves.
 
-::athena{path="D:/Wafig/Hermes/spec.md"}
+::athena{path="<hermes_home>/spec.md"}
 ```
 
 ### Example 3 — Tool-result card
@@ -177,11 +201,11 @@ the "All sessions" button hides the focused session and shows the full feed.
 The list has a live artifact count per session and is sorted newest first.
 Tap a row to open that session's artifacts as a tab.
 
-## Install
+## Verify
 
 ```bash
 cd plugins/athena
-python selftest.py        # 178 checks, offline, no live server needed
+python selftest.py        # offline; no live server needed
 node --check desktop/plugin.js
 hermes plugins show athena
 ```
